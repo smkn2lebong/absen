@@ -2,179 +2,149 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Absen Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Absen Hari Pertama</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {
-      background-color: #f8f9fa;
+    .spinner-border {
+      width: 1.5rem;
+      height: 1.5rem;
     }
-    .loading-spinner {
-      display: none;
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.9em;
+      color: #777;
     }
   </style>
 </head>
-<body>
+<body class="bg-light">
 
-  <div class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card shadow">
-          <div class="card-body">
-            <h3 class="card-title text-center mb-4">Absen Online</h3>
+  <div class="container py-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="text-center mb-4">Absen Hari Pertama</h3>
 
-            <!-- Form NISN -->
-            <div class="mb-3">
-              <label for="nisn" class="form-label">NISN</label>
-              <input type="text" class="form-control" id="nisn" placeholder="Masukkan NISN">
-            </div>
-            <div class="d-grid gap-2 mb-3">
-              <button class="btn btn-success" id="btnCekNISN" type="button">
-                Cek NISN
-              </button>
-            </div>
+        <div class="mb-3">
+          <label for="nisn" class="form-label">Masukkan NISN:</label>
+          <input type="text" class="form-control" id="nisn" placeholder="Contoh: 0105697252" />
+        </div>
 
-            <!-- Form Absensi -->
-            <div id="absenForm" style="display:none;">
-              <div class="mb-3">
-                <label for="namaLama" class="form-label">Nama Lama</label>
-                <input type="text" class="form-control" id="namaLama" readonly>
-              </div>
+        <div class="d-grid mb-3">
+          <button id="btnCekNISN" class="btn btn-primary" onclick="cekNISN()">Cek NISN</button>
+        </div>
 
-              <div class="mb-3">
-                <label for="namaBaru" class="form-label">Nama Baru (Opsional)</label>
-                <input type="text" class="form-control" id="namaBaru" placeholder="Jika mau koreksi nama">
-              </div>
-
-              <div class="mb-3">
-                <label for="sekolahAsal" class="form-label">Sekolah Asal</label>
-                <input type="text" class="form-control" id="sekolahAsal" readonly>
-              </div>
-
-              <div class="mb-3">
-                <label for="jurusan" class="form-label">Jurusan</label>
-                <input type="text" class="form-control" id="jurusan" readonly>
-              </div>
-
-              <div class="d-grid gap-2">
-                <button class="btn btn-primary" id="btnSubmit" type="button">
-                  Kirim Absen
-                </button>
-              </div>
-            </div>
-
-            <div class="text-center mt-3 loading-spinner" id="loading">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-              <p class="mt-2">Sedang memproses...</p>
-            </div>
-
-            <div id="alertContainer" class="mt-3"></div>
+        <div id="formNama" class="d-none">
+          <div class="mb-3">
+            <label for="namaBaru" class="form-label">Tulis Nama Lengkap:</label>
+            <input type="text" class="form-control" id="namaBaru" placeholder="Ketik nama lengkap kamu" />
+          </div>
+          <div class="d-grid">
+            <button id="btnAbsen" class="btn btn-success" onclick="submitAbsen()">Kirim Absen</button>
           </div>
         </div>
+
+        <div class="mt-3 text-center">
+          <span id="loading" class="d-none">
+            <div class="spinner-border text-primary" role="status"></div>
+          </span>
+          <p id="pesan" class="mt-2"></p>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <footer class="bg-dark text-white text-center py-3 mt-5">
-    &copy; Jerkai 2025. All Rights Reserved.
+  <footer class="mt-5">
+    &copy; 2025 by Jerkai
   </footer>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzb7pOi0OHuSKrKyVzLwaPOeuObRrF6GDImHvngzRk5pWZ6YEFIRjMWXdqdhV9iK29wSA/exec";
+    const url = "https://script.google.com/macros/s/AKfycbyXxnJiBc0HI4A6OHVVxn4rZyhgRpCAGyYiHQ3bolLXQ3k_A3N-FV9Pvn22uGo1fe33/exec";
+    let sekolahAsal = "";
+    let jurusan = "";
 
-    document.getElementById("btnCekNISN").addEventListener("click", function() {
+    function cekNISN() {
+      const btn = document.getElementById("btnCekNISN");
+      btn.disabled = true;
+      showLoading(true);
       const nisn = document.getElementById("nisn").value.trim();
+      document.getElementById("pesan").innerText = "";
 
-      if (nisn === "") {
-        showAlert("❌ NISN tidak boleh kosong.", "danger");
-        return;
-      }
-
-      document.getElementById("btnCekNISN").disabled = true;
-      document.getElementById("loading").style.display = "block";
-
-      fetch(`${scriptURL}?nisn=${encodeURIComponent(nisn)}`)
-        .then(response => response.json())
-        .then(result => {
-          console.log(result);
-          if (result.found) {
-            document.getElementById("namaLama").value = result.nama || "";
-            document.getElementById("sekolahAsal").value = result.sekolahAsal || "";
-            document.getElementById("jurusan").value = result.jurusan || "";
-
-            document.getElementById("absenForm").style.display = "block";
-            showAlert("✅ NISN ditemukan. Silakan lanjut isi absen.", "success");
+      fetch(`${url}?nisn=${encodeURIComponent(nisn)}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Cek NISN Response:", data);
+          if (data.found) {
+            sekolahAsal = data.sekolahAsal;
+            jurusan = data.jurusan;
+            document.getElementById("formNama").classList.remove("d-none");
+            document.getElementById("pesan").innerText = "✅ NISN ditemukan. Silakan tulis nama lengkap.";
           } else {
-            showAlert("❌ NISN tidak ditemukan.", "danger");
-            document.getElementById("absenForm").style.display = "none";
+            document.getElementById("formNama").classList.add("d-none");
+            document.getElementById("pesan").innerText = "❌ NISN tidak ditemukan.";
           }
         })
-        .catch(error => {
-          console.error(error);
-          showAlert("❌ Terjadi kesalahan. Silakan coba lagi.", "danger");
+        .catch(err => {
+          console.error("Error saat cek NISN:", err);
+          document.getElementById("pesan").innerText = "❌ Gagal mengecek NISN.";
         })
         .finally(() => {
-          document.getElementById("btnCekNISN").disabled = false;
-          document.getElementById("loading").style.display = "none";
+          showLoading(false);
+          btn.disabled = false;
         });
-    });
+    }
 
-    document.getElementById("btnSubmit").addEventListener("click", function() {
-      document.getElementById("btnSubmit").disabled = true;
-      document.getElementById("loading").style.display = "block";
+    function submitAbsen() {
+      const btn = document.getElementById("btnAbsen");
+      btn.disabled = true;
+      showLoading(true);
 
       const nisn = document.getElementById("nisn").value.trim();
       const namaBaru = document.getElementById("namaBaru").value.trim();
 
-      const data = {
+      if (!nisn || !namaBaru) {
+        document.getElementById("pesan").innerText = "⚠️ Mohon lengkapi semua field.";
+        showLoading(false);
+        btn.disabled = false;
+        return;
+      }
+
+      const params = new URLSearchParams({
         nisn: nisn,
-        namaBaru: namaBaru
-      };
+        namaBaru: namaBaru,
+        sekolahAsal: sekolahAsal,
+        jurusan: jurusan
+      }).toString();
 
-      fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-      .then(response => response.json())
-      .then(result => {
-        console.log(result);
-        showAlert(result.message, result.success ? "success" : "danger");
-        if (result.success) {
-          // reset form
-          document.getElementById("absenForm").style.display = "none";
-          document.getElementById("nisn").value = "";
-          document.getElementById("namaBaru").value = "";
-          document.getElementById("namaLama").value = "";
-          document.getElementById("sekolahAsal").value = "";
-          document.getElementById("jurusan").value = "";
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        showAlert("❌ Terjadi kesalahan. Silakan coba lagi.", "danger");
-      })
-      .finally(() => {
-        document.getElementById("btnSubmit").disabled = false;
-        document.getElementById("loading").style.display = "none";
-      });
-    });
+      console.log("Kirim GET ke:", `${url}?${params}`);
 
-    function showAlert(message, type) {
-      const alertHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
-      document.getElementById("alertContainer").innerHTML = alertHTML;
+      fetch(`${url}?${params}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Absen GET Response:", data);
+          if (data.success) {
+            document.getElementById("pesan").innerText = data.message;
+            document.getElementById("formNama").classList.add("d-none");
+            document.getElementById("nisn").value = "";
+            document.getElementById("namaBaru").value = "";
+          } else {
+            document.getElementById("pesan").innerText = data.message || "❌ Gagal absen.";
+          }
+        })
+        .catch(err => {
+          console.error("Error saat kirim absen GET:", err);
+          document.getElementById("pesan").innerText = "❌ Terjadi kesalahan saat mengirim absen.";
+        })
+        .finally(() => {
+          showLoading(false);
+          btn.disabled = false;
+        });
+    }
+
+    function showLoading(show) {
+      document.getElementById("loading").classList.toggle("d-none", !show);
     }
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
