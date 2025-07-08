@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Absen Hari Pertama</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; }
+    label, input, button { display: block; width: 100%; margin-top: 10px; }
+    .hidden { display: none; }
+    .info { margin-top: 20px; color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h2>Absen Hari Pertama</h2>
+
+  <label for="nisn">Masukkan NISN:</label>
+  <input type="text" id="nisn" placeholder="Contoh: 0105697252" />
+
+  <button onclick="cekNISN()">Cek NISN</button>
+
+  <div id="formNama" class="hidden">
+    <label for="namaBaru">Tulis Nama Lengkap:</label>
+    <input type="text" id="namaBaru" placeholder="Ketik nama lengkap kamu" />
+    <button onclick="submitAbsen()">Kirim Absen</button>
+  </div>
+
+  <p id="pesan" class="info"></p>
+
+  <script>
+    const url = "https://script.google.com/macros/s/AKfycbzb7pOi0OHuSKrKyVzLwaPOeuObRrF6GDImHvngzRk5pWZ6YEFIRjMWXdqdhV9iK29wSA/exec";
+    let sekolahAsal = "";
+    let jurusan = "";
+
+    function cekNISN() {
+      const nisn = document.getElementById("nisn").value.trim();
+      document.getElementById("pesan").innerText = "Mengecek NISN...";
+
+      fetch(`${url}?nisn=${nisn}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Cek NISN Response:", data);
+          if (data.found) {
+            sekolahAsal = data.sekolahAsal;
+            jurusan = data.jurusan;
+            document.getElementById("formNama").classList.remove("hidden");
+            document.getElementById("pesan").innerText = "✅ NISN ditemukan. Silakan tulis nama lengkap.";
+          } else {
+            document.getElementById("formNama").classList.add("hidden");
+            document.getElementById("pesan").innerText = "❌ NISN tidak ditemukan.";
+          }
+        })
+        .catch(err => {
+          console.error("Error saat cek NISN:", err);
+          document.getElementById("pesan").innerText = "❌ Gagal mengecek NISN.";
+        });
+    }
+
+    function submitAbsen() {
+      const nisn = document.getElementById("nisn").value.trim();
+      const namaBaru = document.getElementById("namaBaru").value.trim();
+
+      if (!nisn || !namaBaru) {
+        document.getElementById("pesan").innerText = "⚠️ Mohon lengkapi semua field.";
+        return;
+      }
+
+      console.log("Mengirim data absen:", {
+        nisn,
+        namaBaru,
+        sekolahAsal,
+        jurusan
+      });
+
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify({
+          nisn: nisn,
+          namaBaru: namaBaru,
+          sekolahAsal: sekolahAsal,
+          jurusan: jurusan
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => {
+        console.log("HTTP status POST:", res.status);
+        return res.json();
+      })
+      .then(data => {
+        console.log("Absen Response:", data);
+        if (data.success) {
+          document.getElementById("pesan").innerText = data.message;
+          document.getElementById("formNama").classList.add("hidden");
+          document.getElementById("nisn").value = "";
+          document.getElementById("namaBaru").value = "";
+        } else {
+          document.getElementById("pesan").innerText = data.message || "❌ Gagal absen.";
+        }
+      })
+      .catch(err => {
+        console.error("Error saat kirim absen:", err);
+        document.getElementById("pesan").innerText = "❌ Terjadi kesalahan saat mengirim absen.";
+      });
+    }
+  </script>
+</body>
+</html>
