@@ -23,20 +23,44 @@
           <div class="card-body">
             <h3 class="card-title text-center mb-4">Absen Online</h3>
 
+            <!-- Form NISN -->
             <div class="mb-3">
               <label for="nisn" class="form-label">NISN</label>
               <input type="text" class="form-control" id="nisn" placeholder="Masukkan NISN">
             </div>
-
-            <div class="mb-3">
-              <label for="namaBaru" class="form-label">Nama Lengkap (Opsional)</label>
-              <input type="text" class="form-control" id="namaBaru" placeholder="Jika mau koreksi nama">
+            <div class="d-grid gap-2 mb-3">
+              <button class="btn btn-success" id="btnCekNISN" type="button">
+                Cek NISN
+              </button>
             </div>
 
-            <div class="d-grid gap-2">
-              <button class="btn btn-primary" id="btnSubmit" type="button">
-                Kirim Absen
-              </button>
+            <!-- Form Absensi -->
+            <div id="absenForm" style="display:none;">
+              <div class="mb-3">
+                <label for="namaLama" class="form-label">Nama Lama</label>
+                <input type="text" class="form-control" id="namaLama" readonly>
+              </div>
+
+              <div class="mb-3">
+                <label for="namaBaru" class="form-label">Nama Baru (Opsional)</label>
+                <input type="text" class="form-control" id="namaBaru" placeholder="Jika mau koreksi nama">
+              </div>
+
+              <div class="mb-3">
+                <label for="sekolahAsal" class="form-label">Sekolah Asal</label>
+                <input type="text" class="form-control" id="sekolahAsal" readonly>
+              </div>
+
+              <div class="mb-3">
+                <label for="jurusan" class="form-label">Jurusan</label>
+                <input type="text" class="form-control" id="jurusan" readonly>
+              </div>
+
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary" id="btnSubmit" type="button">
+                  Kirim Absen
+                </button>
+              </div>
             </div>
 
             <div class="text-center mt-3 loading-spinner" id="loading">
@@ -60,11 +84,45 @@
   <script>
     const scriptURL = "https://script.google.com/macros/s/AKfycbzb7pOi0OHuSKrKyVzLwaPOeuObRrF6GDImHvngzRk5pWZ6YEFIRjMWXdqdhV9iK29wSA/exec";
 
-    document.getElementById("btnSubmit").addEventListener("click", function() {
-      // Disable tombol
-      document.getElementById("btnSubmit").disabled = true;
+    document.getElementById("btnCekNISN").addEventListener("click", function() {
+      const nisn = document.getElementById("nisn").value.trim();
 
-      // Tampilkan loading
+      if (nisn === "") {
+        showAlert("❌ NISN tidak boleh kosong.", "danger");
+        return;
+      }
+
+      document.getElementById("btnCekNISN").disabled = true;
+      document.getElementById("loading").style.display = "block";
+
+      fetch(`${scriptURL}?nisn=${encodeURIComponent(nisn)}`)
+        .then(response => response.json())
+        .then(result => {
+          console.log(result);
+          if (result.found) {
+            document.getElementById("namaLama").value = result.nama || "";
+            document.getElementById("sekolahAsal").value = result.sekolahAsal || "";
+            document.getElementById("jurusan").value = result.jurusan || "";
+
+            document.getElementById("absenForm").style.display = "block";
+            showAlert("✅ NISN ditemukan. Silakan lanjut isi absen.", "success");
+          } else {
+            showAlert("❌ NISN tidak ditemukan.", "danger");
+            document.getElementById("absenForm").style.display = "none";
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          showAlert("❌ Terjadi kesalahan. Silakan coba lagi.", "danger");
+        })
+        .finally(() => {
+          document.getElementById("btnCekNISN").disabled = false;
+          document.getElementById("loading").style.display = "none";
+        });
+    });
+
+    document.getElementById("btnSubmit").addEventListener("click", function() {
+      document.getElementById("btnSubmit").disabled = true;
       document.getElementById("loading").style.display = "block";
 
       const nisn = document.getElementById("nisn").value.trim();
@@ -86,10 +144,19 @@
       .then(result => {
         console.log(result);
         showAlert(result.message, result.success ? "success" : "danger");
+        if (result.success) {
+          // reset form
+          document.getElementById("absenForm").style.display = "none";
+          document.getElementById("nisn").value = "";
+          document.getElementById("namaBaru").value = "";
+          document.getElementById("namaLama").value = "";
+          document.getElementById("sekolahAsal").value = "";
+          document.getElementById("jurusan").value = "";
+        }
       })
       .catch(error => {
         console.error(error);
-        showAlert("Terjadi kesalahan. Silakan coba lagi.", "danger");
+        showAlert("❌ Terjadi kesalahan. Silakan coba lagi.", "danger");
       })
       .finally(() => {
         document.getElementById("btnSubmit").disabled = false;
