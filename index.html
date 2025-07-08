@@ -46,7 +46,7 @@
       const nisn = document.getElementById("nisn").value.trim();
       document.getElementById("pesan").innerText = "Mengecek NISN...";
 
-      fetch(`${url}?nisn=${nisn}`)
+      fetch(`${url}?nisn=${encodeURIComponent(nisn)}`)
         .then(res => res.json())
         .then(data => {
           console.log("Cek NISN Response:", data);
@@ -75,44 +75,32 @@
         return;
       }
 
-      console.log("Mengirim data absen:", {
-        nisn,
-        namaBaru,
-        sekolahAsal,
-        jurusan
-      });
+      const params = new URLSearchParams({
+        nisn: nisn,
+        namaBaru: namaBaru,
+        sekolahAsal: sekolahAsal,
+        jurusan: jurusan
+      }).toString();
 
-      fetch(url, {
-        method: "POST",
-        body: JSON.stringify({
-          nisn: nisn,
-          namaBaru: namaBaru,
-          sekolahAsal: sekolahAsal,
-          jurusan: jurusan
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-      .then(res => {
-        console.log("HTTP status POST:", res.status);
-        return res.json();
-      })
-      .then(data => {
-        console.log("Absen Response:", data);
-        if (data.success) {
-          document.getElementById("pesan").innerText = data.message;
-          document.getElementById("formNama").classList.add("hidden");
-          document.getElementById("nisn").value = "";
-          document.getElementById("namaBaru").value = "";
-        } else {
-          document.getElementById("pesan").innerText = data.message || "❌ Gagal absen.";
-        }
-      })
-      .catch(err => {
-        console.error("Error saat kirim absen:", err);
-        document.getElementById("pesan").innerText = "❌ Terjadi kesalahan saat mengirim absen.";
-      });
+      console.log("Kirim GET ke:", `${url}?${params}`);
+
+      fetch(`${url}?${params}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Absen GET Response:", data);
+          if (data.success) {
+            document.getElementById("pesan").innerText = data.message;
+            document.getElementById("formNama").classList.add("hidden");
+            document.getElementById("nisn").value = "";
+            document.getElementById("namaBaru").value = "";
+          } else {
+            document.getElementById("pesan").innerText = data.message || "❌ Gagal absen.";
+          }
+        })
+        .catch(err => {
+          console.error("Error saat kirim absen GET:", err);
+          document.getElementById("pesan").innerText = "❌ Terjadi kesalahan saat mengirim absen.";
+        });
     }
   </script>
 </body>
