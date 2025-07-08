@@ -49,6 +49,13 @@
             <div class="spinner-border text-primary" role="status"></div>
           </span>
           <p id="pesan" class="mt-2"></p>
+
+          <!-- Tempat muncul tombol WA Group -->
+          <div id="waGroup" class="d-none mt-3">
+            <a href="https://chat.whatsapp.com/ETKX1Gxs63963eHRayvMcU" target="_blank" class="btn btn-success">
+              Gabung WA Group Sekolah
+            </a>
+          </div>
         </div>
 
       </div>
@@ -68,6 +75,7 @@
       const btn = document.getElementById("btnCekNISN");
       btn.disabled = true;
       showLoading(true);
+      document.getElementById("waGroup").classList.add("d-none");
       const nisn = document.getElementById("nisn").value.trim();
       document.getElementById("pesan").innerText = "";
 
@@ -128,13 +136,18 @@
             document.getElementById("formNama").classList.add("d-none");
             document.getElementById("nisn").value = "";
             document.getElementById("namaBaru").value = "";
+            
+            // Tampilkan tombol WA Group
+            document.getElementById("waGroup").classList.remove("d-none");
           } else {
             document.getElementById("pesan").innerText = data.message || "❌ Gagal absen.";
+            document.getElementById("waGroup").classList.add("d-none");
           }
         })
         .catch(err => {
           console.error("Error saat kirim absen GET:", err);
           document.getElementById("pesan").innerText = "❌ Terjadi kesalahan saat mengirim absen.";
+          document.getElementById("waGroup").classList.add("d-none");
         })
         .finally(() => {
           showLoading(false);
